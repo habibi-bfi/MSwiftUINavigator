@@ -296,7 +296,7 @@ extension NavigationManager {
     ///
     /// - Parameter viewController: The view controller to start the search from.
     /// - Returns: The found `UINavigationController` or `nil` if not found.
-    private static func findNavigationController(viewController: UIViewController?) -> UINavigationController? {
+    public static func findNavigationController(viewController: UIViewController?) -> UINavigationController? {
         guard let viewController = viewController else {
             return nil
         }
@@ -315,7 +315,7 @@ extension NavigationManager {
     /// Retrieves the current navigation controller for the app.
     ///
     /// - Returns: The current `UINavigationController` or `nil` if not found.
-    private static func getCurrentNavigationController() -> UINavigationController? {
+    public static func getCurrentNavigationController() -> UINavigationController? {
         let nav = findNavigationController(viewController: UIApplication.shared.windows.filter { $0.isKeyWindow }.first?.rootViewController)
         return nav
     }
