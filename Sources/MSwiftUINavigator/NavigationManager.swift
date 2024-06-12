@@ -32,6 +32,24 @@ public extension EnvironmentValues {
     }
 }
 
+// MARK: - Describable Protocol -
+
+public protocol Describable {
+    static var viewName: String { get }
+}
+
+extension Describable {
+    static public var viewName: String {
+        return String(describing: Self.self)
+    }
+}
+
+extension UIViewController {
+    var className: String {
+        String(describing: Self.self)
+    }
+}
+
 // MARK: - Enum PopPositionType -
 
 public enum PopPositionType {
@@ -276,6 +294,46 @@ public struct NavigationManager {
         }
     }
     
+    /// Pop to a specific view label in the navigation stack.
+    ///
+    /// - Parameters:
+    ///   - view: The type of describable view to pop to.
+    ///   - animated: Optional. Whether to animate the transition. Default is true.
+    ///   - inPosition: Optional. The position type to search for the view. Default is .last.
+    public func popToViewNamed<T: Describable>(_ view: T.Type,
+                                   animated: Bool? = nil,
+                                   inPosition: PopPositionType? = .last) {
+        let nav = NavigationManager.getCurrentNavigationController()
+        
+        switch inPosition {
+        case .last:
+            if let vc = nav?.viewControllers.last(where: { $0.className.contains(T.viewName) }) {
+                nav?.popToViewController(vc, animated: animated ?? true)
+            }
+        case .first:
+            if let vc = nav?.viewControllers.first(where: { $0.className.contains(T.viewName) }) {
+                nav?.popToViewController(vc, animated: animated ?? true)
+            }
+        default:
+            break
+        }
+    }
+    
+    /// Replace and Push a new view
+    ///
+    /// - Parameters:
+    ///   - view: A closure that returns the view to push.
+    ///   - animated: Optional. Whether to animate the transition. Default is true.
+    public func replaceView<T: View>(view: () -> T,
+                                  animated: Bool? = nil) {
+        let nav = NavigationManager.getCurrentNavigationController()
+        nav?.viewControllers.removeAll()
+        let swipView = view().onBackSwipe {
+            dismiss()
+        }
+        nav?.pushViewController(UIHostingController(rootView: swipView), animated: animated ?? true)
+    }
+    
     /// Get the current root view of the app.
     ///
     /// - Returns: The root view as a `RootApp<AnyView>` if found, otherwise nil.
@@ -296,7 +354,7 @@ extension NavigationManager {
     ///
     /// - Parameter viewController: The view controller to start the search from.
     /// - Returns: The found `UINavigationController` or `nil` if not found.
-    public static func findNavigationController(viewController: UIViewController?) -> UINavigationController? {
+    private static func findNavigationController(viewController: UIViewController?) -> UINavigationController? {
         guard let viewController = viewController else {
             return nil
         }
@@ -315,10 +373,9 @@ extension NavigationManager {
     /// Retrieves the current navigation controller for the app.
     ///
     /// - Returns: The current `UINavigationController` or `nil` if not found.
-    public static func getCurrentNavigationController() -> UINavigationController? {
+    private static func getCurrentNavigationController() -> UINavigationController? {
         let nav = findNavigationController(viewController: UIApplication.shared.windows.filter { $0.isKeyWindow }.first?.rootViewController)
         return nav
     }
     
 }
-
